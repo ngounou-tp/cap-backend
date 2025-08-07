@@ -8,7 +8,7 @@ def create_shareholder(db: Session, shareholder: ShareholderCreate):
     user = User(email=shareholder.email, hashed_password=get_password_hash(shareholder.password), role=UserRole.shareholder)
     db.add(user)
     db.flush()  # To get user.id
-    profile = ShareholderProfile(name=shareholder.name, user_id=user.id)
+    profile = ShareholderProfile(name=shareholder.name, user_id=user.id, email=shareholder.email)
     db.add(profile)
     db.commit()
     db.refresh(profile)

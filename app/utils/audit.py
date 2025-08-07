@@ -1,6 +1,6 @@
 from app.models.audit_log import AuditLog
 
-def log_action(db, user_id, action):
-    log = AuditLog(user_id=user_id, action=action)
+def log_action(db, user_email, action):
+    log = AuditLog(user_email=user_email, action=action)
     db.add(log)
     db.commit()

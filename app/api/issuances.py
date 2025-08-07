@@ -4,6 +4,7 @@ from app.db.session import get_db
 from app.schemas.issuance import IssuanceCreate, Issuance
 from app.crud import issuances
 from app.models.shareholder import ShareholderProfile
+from app.crud.issuances import get_issuance_and_shareholder
 from app.core.deps import get_current_user
 from typing import List
 from app.utils.pdf_generator import generate_certificate
@@ -44,29 +45,29 @@ def create_issuance(data: IssuanceCreate, db: Session = Depends(get_db), current
     if not issuance:
         raise HTTPException(status_code=404, detail="Shareholder not found")
     log_action(db, current_user["sub"], f"Issuance created for shareholder {data.shareholder_id}")
-    send_email(data.email, "New Share Issuance", f"You have received {data.number_of_shares} shares.")
+    send_email( "test@gmail.com","New Share Issuance", f"You have received {data.number_of_shares} shares.")
     
     return issuance
 
 @router.get("/{id}/certificate")
 def get_certificate(id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    issuance = db.query(Issuance).filter(Issuance.id == id).first()
+    # issuance = db.query(Issuance).filter(Issuance.id == id).first()
+    issuance, shareholder = get_issuance_and_shareholder(db, id)
     if not issuance:
         raise HTTPException(status_code=404, detail="Issuance not found")
 
-    shareholder = db.query(ShareholderProfile).filter(ShareholderProfile.id == issuance.shareholder_id).first()
+    # shareholder = db.query(ShareholderProfile).filter(ShareholderProfile.id == issuance.shareholder_id).first()
     if not shareholder:
         raise HTTPException(status_code=404, detail="Shareholder not found")
 
     if current_user["role"] != "admin" and current_user["sub"] != shareholder.user_id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    pdf_buffer = generate_certificate(issuance, shareholder)
-    return StreamingResponse(pdf_buffer, media_type="application/pdf", headers={"Content-Disposition": "inline; filename=certificate.pdf"})
+    buffer = generate_certificate(issuance, shareholder)
+    return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": "inline; filename=certificate.pdf"})
 
 @router.get("/distribution/")
 def get_distribution(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     return issuances.get_ownership_distribution(db)
-

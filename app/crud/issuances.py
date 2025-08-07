@@ -4,6 +4,9 @@ from app.models.shareholder import ShareholderProfile
 from app.schemas.issuance import IssuanceCreate
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import func
+
 
 
 def create_issuance(db: Session, issuance: IssuanceCreate):
@@ -49,3 +52,16 @@ def get_ownership_distribution(db: Session):
             "percentage": round(percentage, 2)
         })
     return distribution
+
+def get_issuance_and_shareholder(db: Session, issuance_id: int):
+    issuance = db.query(ShareIssuance).filter_by(id=issuance_id).first()
+    if not issuance:
+        return None, None
+
+    shareholder = (
+        db.query(ShareholderProfile)
+        .options(selectinload(ShareholderProfile.user))
+        .filter_by(id=issuance.shareholder_id)
+        .first()
+    )
+    return issuance, shareholder

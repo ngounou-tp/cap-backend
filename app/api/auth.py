@@ -25,12 +25,12 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token_expires = timedelta(minutes=30)
+    access_token_expires = timedelta(minutes=50)
     access_token = create_access_token(
-        data={"sub": user.email, "role": user.role},
+        data={"sub": user.email, "role": user.role, 'id': user.id},
         expires_delta=access_token_expires
     )
 
-    log_action(db, user.id, "User logged in")
+    log_action(db, user.email, "User logged in")
 
     return {"access_token": access_token, "token_type": "bearer"}

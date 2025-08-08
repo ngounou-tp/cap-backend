@@ -11,6 +11,7 @@ from app.utils.pdf_generator import generate_certificate
 from fastapi.responses import StreamingResponse
 from app.utils.audit import log_action
 from app.utils.email import send_email
+from app.crud.issuances import get_logs
 
 
 
@@ -71,3 +72,20 @@ def get_distribution(db: Session = Depends(get_db), current_user=Depends(get_cur
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     return issuances.get_ownership_distribution(db)
+
+@router.get("/logs")
+def list_logs(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    logs = get_logs(db)
+    return logs
+
+@router.get("/by-user/{user_id}", response_model=List[Issuance])
+def get_issuances_by_user_id(user_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    
+    shareholder = db.query(ShareholderProfile).filter_by(user_id=user_id).first()
+    if not shareholder:
+        raise HTTPException(status_code=404, detail="Shareholder not found for user")
+
+    return issuances.get_issuances_for_shareholder(db, shareholder.id)

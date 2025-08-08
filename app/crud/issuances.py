@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.issuance import ShareIssuance
 from app.models.shareholder import ShareholderProfile
+from app.models.audit_log import AuditLog
 from app.schemas.issuance import IssuanceCreate
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -65,3 +66,6 @@ def get_issuance_and_shareholder(db: Session, issuance_id: int):
         .first()
     )
     return issuance, shareholder
+
+def get_logs(db: Session):
+    return db.query(AuditLog).order_by(AuditLog.timestamp.desc()).limit(5).all()
